@@ -111,7 +111,7 @@ int main(void) {
 }
 // Timer 1 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void){
-    //This interrupt changes state of LED for alarm at end of timer
+    //This interrupt is used for Pulse Width Modulation 
     IFS0bits.T1IF = 0;
     //_LATA6 ^= 1; //change led2 state
     T1CONbits.TON = 0;
@@ -128,15 +128,52 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
     IFS0bits.T2IF = 0;
     T2CONbits.TON = 0;   //turn off timer after filter
     if(programOn== 1){
-        if(PORTBbits.RB4== 0){
-            on ^= 1; //on PB1 press increase second flag
+        if(PORTBbits.RB7== 0){
+            //on PB1 press while on, filter to decide
+            T3CONbits.TCKPS = 2; // set prescaler to 1:64
+            TMR3= 0;  
+            PR3= 11718;    //set for 3 seconds give or take
+            TMR3Flag= 0;        
+            T3CONbits.TON = 1;
+            prsLfilter= 1;   //flag for press Lenght filter
+            
+        }
+        else if(PORTBbits.RB4== 0){
+            //on PB2 press while on, start to blink
+            if(PB2OnMode== 1){
+                //if already blinking 
+                PB2OnMode= 0;
+            }
+            else if(PB2OnMode== 0){
+                PB2OnMode= 1;
+                //add blink
+            }
+        }
+        else if(PORTAbits.RA4== 0){
+            if(PB3OnMode== 1){
+                //if already transmitting 
+                PB2OnMode= 0;
+            }
+            else if(PB2OnMode== 0){
+                PB2OnMode= 1;
+                //start transmitting
+            }
         }
     }
+    else if(PORTBbits.RB4== 0 && PB2OffMode== 1){
+        //TURN PB2Off mode off regardless of other modes
+        PB2OffMode= 0;
+    }
+    
     else if(programOn== 0){
         if(PORTBbits.RB7== 0){
+            //on PB1 press while off turn LED1 on
+            programOn== 1;
             LED1mode= 1; //on PB1 press start normal light control-LED1
         }
-        
+        else if(PORTBbits.RB4== 0){
+            PB2OffMode= 1;
+        }
     }
     
     
@@ -150,13 +187,42 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     IFS0bits.T3IF = 0;
     overState ^= 1;
     T3CONbits.TON = 1;   //keep timer on
-    
+    TMR3Flag= 1;   
 }
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
-    //Don't forget to clear the CN interrupt flag!
     IFS1bits.CNIF = 0;  //clear CN interrupt flag
+    //possible edge case of multiple cn interrupts erasing prsLfilter 
+    if(prsLfilter== 1){
+        if (TMR3Flag== 1){
+        /*If timer has finished and we are filtering, this is a long press*/
+             //on PB1 long press, change LED
+            if(LED1mode==1){
+                LED2mode= 1;
+                LED1mode= 0;
+            }
+            else if(LED2mode== 1){
+                LED1mode= 1;
+                LED2mode= 0;  
+            }
+        
+        TMR3Flag= 0;
+        }
+        else if(TMR3Flag== 0){
+         /*If timer has not finished and we are filtering, this is a short press*/
+            //go to Off Mode
+            programOn= 0;
+            LED1mode= 0;
+            LED2mode= 0;
+            PB2OnMode= 0;
+            PB3Mode= 0;
+            PB2OffMode= 0;
+            //All these combine to Off mode
+        }
+        prsLfilter= 0; //clear filter flag
+    }
     
+    //Don't forget to clear the CN interrupt flag!
     TMR2 = 0;  
     T2CONbits.TON = 1;   //use tmr2 for debounce filter
         
