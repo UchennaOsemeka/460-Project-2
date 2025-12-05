@@ -108,36 +108,7 @@ int main(void) {
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void){
     //This interrupt is used for Pulse Width Modulation 
     IFS0bits.T1IF = 0;
-    if(LED1Mode){
-        if(changeState==0){
-        LATBbits.LATB9= 1;
-        PR1=  dutyOn;  //on time % of 100Hz- 0.01s
-        //T1CONbits.TON= 1; //start timer
-        changeState= 1;
-                       
-        }
-        else if(changeState== 1){
-            LATBbits.LATB9= 0;
-            PR1=  dutyOff;  //on time % of 100Hz- 0.01s
-            //T1CONbits.TON= 1; //start timer
-            changeState= 0;
-        } 
-    }
-    else if(LED2Mode){
-         if(changeState==0){
-            LATAbits.LATA6= 1;
-            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
-            //T1CONbits.TON= 1; //start timer
-            changeState= 1;
-
-        }
-        else if(changeState== 1){
-            LATAbits.LATA6= 0;
-            PR1=  dutyOff;  //on time % of 100Hz- 0.01s
-            //T1CONbits.TON= 1; //start timer
-            changeState= 0;
-        }
-    }
+    T1CONbits.TON= 0; //start timer
 }
 
 // Timer 2 interrupt subroutine
@@ -232,9 +203,6 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         else if(TMR3Flag== 0){
          /*If timer has not finished and we are filtering, this is a short press*/
             //go to Off Mode
-            T1CONbits.TON= 0;//end pwm
-            LATAbits.LATA6= 0;
-            LATBbits.LATB9= 0;
             programOn= 0;
             LED1Mode= 0;
             LED2Mode= 0;
@@ -254,6 +222,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
 
 //ADC interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _ADC1Interrupt(void){
+    ADCvalue = ADC1BUF0; // ADC output is stored in ADC1BUF0 as this point
     IFS0bits.AD1IF = 0; // Clear the ADC1 Interrupt Flag
 }
 

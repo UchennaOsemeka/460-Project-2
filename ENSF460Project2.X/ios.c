@@ -83,7 +83,12 @@ void IOcheck(){
   * if else logic to call the appropriate action defined in timerDelay
   */
     if(programOn== 1){
-        ONMode();
+        if(LED1Mode== 1){
+            ADCtoLED1(); 
+        }
+        else if(LED2Mode== 1){
+            ADCtoLED2();
+        }
     }
     else if(programOn== 0){
         ADCEnd();

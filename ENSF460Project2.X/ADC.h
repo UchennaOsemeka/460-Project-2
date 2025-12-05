@@ -30,8 +30,8 @@ void ADCtoLED1();
 void ADCtoLED2();
 void ONMode();
 void ADCEnd();
+void delay_sample();
 
-void do_ADC_poll();
 
 
 #ifdef	__cplusplus
