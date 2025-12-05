@@ -103,18 +103,22 @@ void ADCtoLED1(){
                 Idle();
             }
         }
-        do_ADC();
-        if(PB3Mode== 1){
-            sendtoPython();
+        if(guard== 0){
+            do_ADC();
+            Disp2Hex(ADCvalue);
+            uint16_t maxDuty= 309;
+            uint16_t maxADC= 1023;
+            dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
+            if (dutyOn < 12){
+                dutyOn= 12;
+            }
+            dutyOff= 310- dutyOn;
+            if(PB3Mode== 1){
+                sendtoPython();
+            }
+            guard= 1;
         }
-        uint16_t maxDuty= 309;
-        uint16_t maxADC= 1023;
-        uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
-        if (dutyOn < 12){
-            dutyOn= 12;
-        }
-        uint16_t dutyOff= 310- dutyOn;
-
+        
         while(1){
             LATBbits.LATB9= 1;
             TMR1= 0;
@@ -127,6 +131,7 @@ void ADCtoLED1(){
             T1CONbits.TON= 1; //start timer
             Idle();
             if(overState == 0){//global variable, fires every second and prompts a recalculation
+                //guard= 0;
                 break;
             }
             /*CONSIDER doing calculation for dutytime in ADC ISR, however
