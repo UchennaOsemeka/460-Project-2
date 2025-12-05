@@ -72,6 +72,7 @@ uint16_t volatile PB2OffMode= 0;
 uint16_t volatile prsLfilter= 0;  //used for filtering long vs short presses
 uint16_t volatile TMR3Flag= 0;
 uint16_t volatile changeState= 0;
+uint16_t volatile guard= 0;
 
 
 //Global Variables
@@ -178,7 +179,8 @@ void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
     IFS0bits.T3IF = 0;
     overState ^= 1;
     T3CONbits.TON = 1;   //keep timer on
-    TMR3Flag= 1;   
+    TMR3Flag= 1;  
+    guard= 0;
 }
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){

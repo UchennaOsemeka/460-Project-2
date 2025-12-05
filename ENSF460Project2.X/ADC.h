@@ -23,6 +23,7 @@ extern volatile uint16_t ADCvalue; // 16 bit register used to hold ADC converted
 extern volatile uint16_t overState; // force leave
 extern volatile uint16_t dutyOn; // time on for PWM
 extern volatile uint16_t dutyOff; // time off for PWM
+extern volatile uint16_t guard;
 
 void ADCInit();
 void do_ADC();

@@ -97,7 +97,12 @@ void do_ADC(){
 
 void ADCtoLED1(){
     while(LED1Mode){
-       
+        if(PB2OnMode== 1){
+            while(overState==0){
+                LATBbits.LATB9= 0;
+                Idle();
+            }
+        }
         do_ADC();
         if(PB3Mode== 1){
             sendtoPython();
