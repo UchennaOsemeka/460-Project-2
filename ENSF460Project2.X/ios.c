@@ -39,7 +39,7 @@ void IOinit(){ //initialize input/output
     T1CONbits.TSYNC = 0; // do not sync to external clock
     // T1CONbits.TGATE = 0;
     T1CONbits.TSIDL = 0; //operate in idle mode
-    IPC0bits.T1IP = 2; //set priority to 2.
+    IPC0bits.T1IP = 4; //set priority 
     IFS0bits.T1IF = 0; //clear interrupt flag
     IEC0bits.T1IE = 1; //enable timer interrupt
     
@@ -51,7 +51,7 @@ void IOinit(){ //initialize input/output
     TRISBbits.TRISB9 = 0;  
     LATBbits.LATB9 = 0;
     TRISAbits.TRISA6 = 0;
-    LATAbits.LATA6 = 1;
+    LATAbits.LATA6 = 0;
     
     TRISAbits.TRISA4 = 1;
     CNPU1bits.CN0PUE = 1;
@@ -83,12 +83,7 @@ void IOcheck(){
   * if else logic to call the appropriate action defined in timerDelay
   */
     if(programOn== 1){
-        if(LED1Mode== 1){
-            ADCtoLED1(); 
-        }
-        else if(LED2Mode== 1){
-            ADCtoLED2();
-        }
+        ONMode();
     }
     else if(programOn== 0){
         ADCEnd();
@@ -106,4 +101,7 @@ void PB2OffBlink(){
         T3CONbits.TON= 1; //start timer
         Idle();
     }
+    if(PB2OffMode== 0){
+            LATBbits.LATB9= 0;
+        }
 }

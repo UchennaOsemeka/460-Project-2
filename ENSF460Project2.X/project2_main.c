@@ -67,14 +67,18 @@ uint16_t volatile PB2OffMode= 0;
 
 
 
+
 //Status Flags
 uint16_t volatile prsLfilter= 0;  //used for filtering long vs short presses
 uint16_t volatile TMR3Flag= 0;
+uint16_t volatile changeState= 0;
 
 
 //Global Variables
 uint16_t volatile ADCvalue= 0; // 16 bit register used to hold ADC converted digital output ADC1BUF0
 uint16_t volatile overState= 0; // state of output
+uint16_t volatile dutyOn= 0;
+uint16_t volatile dutyOff= 0;
 
 /**
  * You might find it useful to add your own #defines to improve readability here
@@ -104,10 +108,36 @@ int main(void) {
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void){
     //This interrupt is used for Pulse Width Modulation 
     IFS0bits.T1IF = 0;
-    //_LATA6 ^= 1; //change led2 state
-    T1CONbits.TON = 0;
-    //TMR1flag = 1; // global variable created by user
-    
+    if(LED1Mode){
+        if(changeState==0){
+        LATBbits.LATB9= 1;
+        PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+        //T1CONbits.TON= 1; //start timer
+        changeState= 1;
+                       
+        }
+        else if(changeState== 1){
+            LATBbits.LATB9= 0;
+            PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 0;
+        } 
+    }
+    else if(LED2Mode){
+         if(changeState==0){
+            LATAbits.LATA6= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+
+        }
+        else if(changeState== 1){
+            LATAbits.LATA6= 0;
+            PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 0;
+        }
+    }
 }
 
 // Timer 2 interrupt subroutine
@@ -159,7 +189,7 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
     else if(programOn== 0){
         if(PORTBbits.RB7== 0){
             //on PB1 press while off turn LED1 on
-            programOn== 1;
+            programOn= 1;
             LED1Mode= 1; //on PB1 press start normal light control-LED1
         }
         else if(PORTBbits.RB4== 0){
@@ -187,6 +217,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         if (TMR3Flag== 1){
         /*If timer has finished and we are filtering, this is a long press*/
              //on PB1 long press, change LED
+            //programOn= 1;
             if(LED1Mode==1){
                 LED2Mode= 1;
                 LED1Mode= 0;
@@ -201,6 +232,9 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         else if(TMR3Flag== 0){
          /*If timer has not finished and we are filtering, this is a short press*/
             //go to Off Mode
+            T1CONbits.TON= 0;//end pwm
+            LATAbits.LATA6= 0;
+            LATBbits.LATB9= 0;
             programOn= 0;
             LED1Mode= 0;
             LED2Mode= 0;

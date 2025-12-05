@@ -48,6 +48,7 @@ void do_ADC(){
     /* Polling option
     while(AD1CON1bits.DONE==0)
     {}*/
+    Disp2Hex(ADCvalue);
     ADCvalue = ADC1BUF0; // ADC output is stored in ADC1BUF0 as this point
     AD1CON1bits.SAMP=0; //End Sampling,
     /*
@@ -58,99 +59,33 @@ void do_ADC(){
      */
     return;
 }
-void ADCtoLED1(){
-    while(programOn== 1){
-        uint16_t started= 0;
+
+void ONMode(){
+    uint16_t firstTime= 1;
+    while(LED1Mode== 1 || LED2Mode== 1){ //if flags have changed, exit 
         
-        while(programOn== 1){//if PB2 blink on then wait a second
-            if(PB2OnMode== 1 && started== 1){
-                   Idle();
-                }//don't wait on first iteration, will consider removing
-            started= 1;
+        if(firstTime== 1){
+            T1CONbits.TON= 1; //start timer
+            firstTime= 0;
+        }
+        Idle();
+        if(overState== 0){
             do_ADC();
             if(PB3Mode== 1){
                 sendtoPython();
             }
             uint16_t maxDuty= 309;
             uint16_t maxADC= 1023;
-            uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
+            dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
             if (dutyOn < 12){
                 dutyOn= 12;
             }
-            uint16_t dutyOff= 310- dutyOn;
-
-            while(programOn== 1){
-                LATBbits.LATB9= 1;
-                TMR1= 0;
-                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
-                T1CONbits.TON= 1; //start timer
-                Idle();
-                LATBbits.LATB9= 0;
-                TMR1= 0;
-                PR1=  dutyOff;  //off time % of 100Hz- 0.01s
-                T1CONbits.TON= 1; //start timer
-                Idle();
-                if(overState == 0){//global variable, fires every second and prompts a recalculation
-                    break;
-                }
-                /*CONSIDER doing calculation for dutytime in ADC ISR, however
-                 requirement to transmit makes a 1 second break ideal for now */
-                if(LED2Mode== 1){//if flags have changed, exit 
-                    ADCtoLED2();
-                    return;
-                }//think about placement
-   
-             }
+            dutyOff= 310- dutyOn;
+            while(overState == 0 && PB2OnMode== 1){//global variable, fires every second and prompts a recalculation
+                    Idle();
+            }
         }
     }
-    
-}
-void ADCtoLED2(){
-    while(programOn== 1){
-        uint16_t started= 0;
-        
-        while(programOn== 1){//if PB2 blink on then wait a second
-            if(PB2OnMode== 1 && started== 1){
-                   Idle();
-                }//don't wait on first iteration, will consider removing
-            started= 1;
-            do_ADC();
-            if(PB3Mode== 1){
-                sendtoPython();
-            }
-            uint16_t maxDuty= 309;
-            uint16_t maxADC= 1023;
-            uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
-            if (dutyOn < 12){
-                dutyOn= 12;
-            }
-            uint16_t dutyOff= 310- dutyOn;
-
-            while(programOn== 1){
-                LATAbits.LATA6= 1;
-                TMR1= 0;
-                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
-                T1CONbits.TON= 1; //start timer
-                Idle();
-                LATAbits.LATA6= 0;
-                TMR1= 0;
-                PR1=  dutyOff;  //off time % of 100Hz- 0.01s
-                T1CONbits.TON= 1; //start timer
-                Idle();
-                if(overState == 0){//global variable, fires every second and prompts a recalculation
-                    break;
-                }
-                /*CONSIDER doing calculation for dutytime in ADC ISR, however
-                 requirement to transmit makes a 1 second break ideal for now */
-                if(LED1Mode== 1){//if flags have changed, exit 
-                    ADCtoLED1();
-                    return;
-                }//think about placement
-   
-             }
-        }
-    }
-    
 }
 
 
