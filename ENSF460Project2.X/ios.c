@@ -16,7 +16,7 @@
 
 void IOinit(){ //initialize input/output
     //T3CON config
-    T3CONbits.TCKPS = 1; // set prescaler to 1:8
+    T3CONbits.TCKPS = 2; // set prescaler to 1:64
     T3CONbits.TCS = 0; // use internal clock
     T3CONbits.TSIDL = 0; //operate in idle mode
     IPC2bits.T3IP = 3; //7 is highest and 1 is lowest pri.
@@ -26,16 +26,16 @@ void IOinit(){ //initialize input/output
     
     //T2CON config
     T2CONbits.T32 = 0; // operate timer 2 as 16 bit timer
-    T2CONbits.TCKPS = 1; // set prescaler to 1:8
+    T2CONbits.TCKPS = 2; // set prescaler to 1:64
     T2CONbits.TCS = 0; // use internal clock
     T2CONbits.TSIDL = 0; //operate in idle mode
     IPC1bits.T2IP = 2; //7 is highest and 1 is lowest pri.
     IFS0bits.T2IF = 0; //clear interrupt flag
     IEC0bits.T2IE = 1; //enable timer interrupt
-    PR2 = 1800; // set to a debounce that's just right
+    PR2 = 3599; // set to a debounce that's just right 0.0576s rn
     
     //T1CON config
-    T1CONbits.TCKPS = 1; // set prescaler to 1:8
+    T1CONbits.TCKPS = 2; // set prescaler to 1:64
     T1CONbits.TSYNC = 0; // do not sync to external clock
     // T1CONbits.TGATE = 0;
     T1CONbits.TSIDL = 0; //operate in idle mode
@@ -73,7 +73,7 @@ void IOinit(){ //initialize input/output
     IEC1bits.CNIE = 1; //enable CN interrupts
     
     TMR3= 0;
-    PR3=  12500;  //0.5 sec timer
+    PR3=  31249  //0.5 sec timer
     T3CONbits.TON= 1; //start timer
 }
 
@@ -102,7 +102,7 @@ void PB2OffBlink(){
     while(PB2OffMode== 1){
         LATBbits.LATB9^= 1;
         TMR3= 0;
-        PR3=  12500;  //0.5sec timer
+        PR3=  31249;  //0.5sec timer
         T3CONbits.TON= 1; //start timer
         Idle();
     }
