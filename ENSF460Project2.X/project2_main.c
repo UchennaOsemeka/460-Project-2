@@ -56,32 +56,24 @@
 #include "ios.h"
 #include "ADC.h"
 
-
 uint8_t clkfck= 0; //unused
 //Event Flags
-uint16_t volatile incrSecond= 0; //flag for Increase second 
-uint16_t volatile incrMinute= 0;
-uint16_t volatile decrSecond= 0;
-uint16_t volatile decrMinute= 0;
-uint16_t volatile resTmr= 0;  //reset timer
-uint16_t volatile dispInfo= 0;
-uint16_t volatile strtTmr= 0;
-uint16_t volatile prsLfilter= 0;  //used for filtering long vs short presses
-uint16_t volatile pseTmr= 0;
-uint16_t volatile restartTmr= 0;
+uint16_t volatile programOn= 0;
+uint16_t volatile LED1Mode= 0;
+uint16_t volatile LED2Mode= 0;
+uint16_t volatile PB2OnMode= 0;
+uint16_t volatile PB3Mode= 0;
+uint16_t volatile PB2OffMode= 0;
+
+
 
 //Status Flags
-uint16_t volatile paused= 0;
-uint16_t volatile timerOn= 0;
+uint16_t volatile prsLfilter= 0;  //used for filtering long vs short presses
 uint16_t volatile TMR3Flag= 0;
-uint16_t volatile tmrSet= 0;   //timer set status flag
 
-//Timer Global Variable
-uint16_t volatile timerCount= 0;
 
+//Global Variables
 uint16_t volatile ADCvalue= 0; // 16 bit register used to hold ADC converted digital output ADC1BUF0
-uint16_t volatile mode= 2; // Mode flag
-uint16_t volatile on= 1; // on flag
 uint16_t volatile overState= 0; // state of output
 
 /**
@@ -103,9 +95,8 @@ int main(void) {
     InitUART2();   //initialize UART
   
     while(1) {//keep device on
-        //Idle();  //stay in Idle
-        IOcheck(); //run conversion
-        ADCEnd();
+        Idle();  //stay in Idle
+        IOcheck(); //perform correct logic
     }
     return 0;
 }
@@ -150,12 +141,12 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
             }
         }
         else if(PORTAbits.RA4== 0){
-            if(PB3OnMode== 1){
-                //if already transmitting 
-                PB2OnMode= 0;
+            if(PB3Mode== 1){
+                //if already transmitting end transmision
+                PB3Mode= 0;
             }
-            else if(PB2OnMode== 0){
-                PB2OnMode= 1;
+            else if(PB3Mode== 0){
+                PB3Mode= 1;
                 //start transmitting
             }
         }
@@ -169,7 +160,7 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
         if(PORTBbits.RB7== 0){
             //on PB1 press while off turn LED1 on
             programOn== 1;
-            LED1mode= 1; //on PB1 press start normal light control-LED1
+            LED1Mode= 1; //on PB1 press start normal light control-LED1
         }
         else if(PORTBbits.RB4== 0){
             PB2OffMode= 1;
@@ -182,8 +173,7 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
 }
 
 void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
-    //TMR3 used for force blinking
-    //configured to blink every second
+    //TMR3 used for force blinking every 0.5s
     IFS0bits.T3IF = 0;
     overState ^= 1;
     T3CONbits.TON = 1;   //keep timer on
@@ -197,13 +187,13 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         if (TMR3Flag== 1){
         /*If timer has finished and we are filtering, this is a long press*/
              //on PB1 long press, change LED
-            if(LED1mode==1){
-                LED2mode= 1;
-                LED1mode= 0;
+            if(LED1Mode==1){
+                LED2Mode= 1;
+                LED1Mode= 0;
             }
-            else if(LED2mode== 1){
-                LED1mode= 1;
-                LED2mode= 0;  
+            else if(LED2Mode== 1){
+                LED1Mode= 1;
+                LED2Mode= 0;  
             }
         
         TMR3Flag= 0;
@@ -212,8 +202,8 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
          /*If timer has not finished and we are filtering, this is a short press*/
             //go to Off Mode
             programOn= 0;
-            LED1mode= 0;
-            LED2mode= 0;
+            LED1Mode= 0;
+            LED2Mode= 0;
             PB2OnMode= 0;
             PB3Mode= 0;
             PB2OffMode= 0;

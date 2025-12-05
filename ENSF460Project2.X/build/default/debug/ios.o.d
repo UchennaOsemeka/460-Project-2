@@ -1,6 +1,6 @@
-build/default/debug/ios.o: ios.c iOs.h ADC.h UART2.h displayUART.h
+build/default/debug/ios.o: ios.c ios.h ADC.h UART2.h displayUART.h
 
-iOs.h:
+ios.h:
 
 ADC.h:
 

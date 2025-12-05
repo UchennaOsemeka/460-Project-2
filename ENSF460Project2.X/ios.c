@@ -7,7 +7,7 @@
 
 #include <xc.h>
 #include <p24F16KA101.h>
-#include "iOs.h"
+#include "ios.h"
 #include "ADC.h"
 #include "UART2.h"
 #include "displayUART.h"
@@ -73,7 +73,7 @@ void IOinit(){ //initialize input/output
     IEC1bits.CNIE = 1; //enable CN interrupts
     
     TMR3= 0;
-    PR3=  12500;  //1sec timer
+    PR3=  12500;  //0.5 sec timer
     T3CONbits.TON= 1; //start timer
 }
 
@@ -82,43 +82,28 @@ void IOcheck(){
   * IOcheck, the next instruction after Idle() in main, is called. IOcheck uses
   * if else logic to call the appropriate action defined in timerDelay
   */
-    while(on== 1){
-        //do_ADC();
-        if(mode== 0){
-            dispADC();    
+    if(programOn== 1){
+        if(LED1Mode== 1){
+            ADCtoLED1(); 
         }
-        else if(mode== 1){
-            sendtoPython();
+        else if(LED2Mode== 1){
+            ADCtoLED2();
         }
-        else if (mode== 2){
-            while(mode== 2){
-                Idle();
-                do_ADC();
-    
-                uint16_t maxDuty= 309;
-                uint16_t maxADC= 1023;
-                uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
-                if (dutyOn < 12){
-                    dutyOn= 12;
-                }
-                uint16_t dutyOff= 310- dutyOn;
-                
-                while(1){
-                    LATBbits.LATB9= 1;
-                    TMR1= 0;
-                    PR1=  dutyOn;  //on time % of 100Hz- 0.01s
-                    T1CONbits.TON= 1; //start timer
-                    Idle();
-                    LATBbits.LATB9= 0;
-                    TMR1= 0;
-                    PR1=  dutyOff;  //off time % of 100Hz- 0.01s
-                    T1CONbits.TON= 1; //start timer
-                    Idle();
-                    if(overState == 0){
-                        break;
-                    }
-                 }
-            }
+    }
+    else if(programOn== 0){
+        ADCEnd();
+        if(PB2OffMode== 1){
+            PB2OffBlink();
         }
+    }    
+}
+
+void PB2OffBlink(){
+    while(PB2OffMode== 1){
+        LATBbits.LATB9^= 1;
+        TMR3= 0;
+        PR3=  12500;  //0.5sec timer
+        T3CONbits.TON= 1; //start timer
+        Idle();
     }
 }

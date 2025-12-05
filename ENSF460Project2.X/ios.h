@@ -11,29 +11,21 @@
 extern "C" {
 #endif
 
-extern volatile uint16_t incrSecond;
-extern volatile uint16_t incrMinute;
-extern volatile uint16_t decrSecond;
-extern volatile uint16_t decrMinute;
-extern volatile uint16_t resTmr;
-extern volatile uint16_t dispInfo;
-extern volatile uint16_t strtTmr;
-extern volatile uint16_t timerOn;
-extern volatile uint16_t prsLfilter;
-extern volatile uint16_t paused;
-extern volatile uint16_t pseTmr;
-extern volatile uint16_t restartTmr;
-extern volatile uint16_t TMR3Flag;
+//Event Flags
+extern volatile uint16_t programOn;
+extern volatile uint16_t LED1Mode;
+extern volatile uint16_t LED2Mode;
+extern volatile uint16_t PB2OnMode;
+extern volatile uint16_t PB3Mode;
+extern volatile uint16_t PB2OffMode;
 
-extern volatile uint16_t timerCount;
-extern volatile uint16_t tmrSet;
-extern volatile uint16_t mode;
-extern volatile uint16_t ADCvalue;
-extern volatile uint16_t on;
-extern volatile uint16_t overState;
+//Global Variables 
+extern volatile uint16_t ADCvalue; // 16 bit register used to hold ADC converted digital output ADC1BUF0
+extern volatile uint16_t overState; // force leave
 
 void IOinit();
 void IOcheck();
+void PB2OffBlink();
 
 
 #ifdef	__cplusplus

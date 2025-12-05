@@ -58,6 +58,101 @@ void do_ADC(){
      */
     return;
 }
+void ADCtoLED1(){
+    while(programOn== 1){
+        uint16_t started= 0;
+        
+        while(programOn== 1){//if PB2 blink on then wait a second
+            if(PB2OnMode== 1 && started== 1){
+                   Idle();
+                }//don't wait on first iteration, will consider removing
+            started= 1;
+            do_ADC();
+            if(PB3Mode== 1){
+                sendtoPython();
+            }
+            uint16_t maxDuty= 309;
+            uint16_t maxADC= 1023;
+            uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
+            if (dutyOn < 12){
+                dutyOn= 12;
+            }
+            uint16_t dutyOff= 310- dutyOn;
+
+            while(programOn== 1){
+                LATBbits.LATB9= 1;
+                TMR1= 0;
+                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+                T1CONbits.TON= 1; //start timer
+                Idle();
+                LATBbits.LATB9= 0;
+                TMR1= 0;
+                PR1=  dutyOff;  //off time % of 100Hz- 0.01s
+                T1CONbits.TON= 1; //start timer
+                Idle();
+                if(overState == 0){//global variable, fires every second and prompts a recalculation
+                    break;
+                }
+                /*CONSIDER doing calculation for dutytime in ADC ISR, however
+                 requirement to transmit makes a 1 second break ideal for now */
+                if(LED2Mode== 1){//if flags have changed, exit 
+                    ADCtoLED2();
+                    return;
+                }//think about placement
+   
+             }
+        }
+    }
+    
+}
+void ADCtoLED2(){
+    while(programOn== 1){
+        uint16_t started= 0;
+        
+        while(programOn== 1){//if PB2 blink on then wait a second
+            if(PB2OnMode== 1 && started== 1){
+                   Idle();
+                }//don't wait on first iteration, will consider removing
+            started= 1;
+            do_ADC();
+            if(PB3Mode== 1){
+                sendtoPython();
+            }
+            uint16_t maxDuty= 309;
+            uint16_t maxADC= 1023;
+            uint16_t dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
+            if (dutyOn < 12){
+                dutyOn= 12;
+            }
+            uint16_t dutyOff= 310- dutyOn;
+
+            while(programOn== 1){
+                LATAbits.LATA6= 1;
+                TMR1= 0;
+                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+                T1CONbits.TON= 1; //start timer
+                Idle();
+                LATAbits.LATA6= 0;
+                TMR1= 0;
+                PR1=  dutyOff;  //off time % of 100Hz- 0.01s
+                T1CONbits.TON= 1; //start timer
+                Idle();
+                if(overState == 0){//global variable, fires every second and prompts a recalculation
+                    break;
+                }
+                /*CONSIDER doing calculation for dutytime in ADC ISR, however
+                 requirement to transmit makes a 1 second break ideal for now */
+                if(LED1Mode== 1){//if flags have changed, exit 
+                    ADCtoLED1();
+                    return;
+                }//think about placement
+   
+             }
+        }
+    }
+    
+}
+
 
 void ADCEnd(){
     AD1CON1bits.ADON = 0; // turn off ADC module
