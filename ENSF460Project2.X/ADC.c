@@ -27,9 +27,13 @@ void ADCInit(){
     
     // Configure ADC by setting bits in AD1CON3
     AD1CON3bits.ADRC = 0; // Use system clock
+    
     AD1CON3bits.ADCS = 35;        // AD clock = (ADCS + 1) * Tcy
     AD1CON3bits.SAMC = 30;        // Auto-sample for 10 T_AD
-    
+    /*
+    AD1CON3bits.ADCS = 50;        // AD clock = (ADCS + 1) * Tcy
+    AD1CON3bits.SAMC = 45;        // Auto-sample for 10 T_AD
+    */
      //Configure the ADC?s sample time by setting bits in AD1CON3
      // Ensure sample time is 1/10th of signal being sampled
      // Select and configure ADC input
@@ -82,7 +86,6 @@ void do_ADC(){
     /* Polling option
     while(AD1CON1bits.DONE==0)
     {}*/
-    Disp2Hex(ADCvalue);
     ADCvalue = ADC1BUF0; // ADC output is stored in ADC1BUF0 as this point
     AD1CON1bits.SAMP=0; //End Sampling,
     /*
@@ -105,7 +108,6 @@ void ADCtoLED1(){
         }
         if(guard== 0){
             do_ADC();
-            Disp2Hex(ADCvalue);
             uint16_t maxDuty= 309;
             uint16_t maxADC= 1023;
             dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
@@ -177,6 +179,50 @@ void ADCtoLED2(){
 
          }
         }
+}
+void ONMode(){
+    /*Functionality for On mode. Toggling is done in ISR so this just handles
+     starting timer, calculations, and transmission to UART*/
+    uint16_t firstTime= 1;// turn TimerOn on first go around
+    while(LED1Mode || LED2Mode){
+        if(PB2OnMode== 1){
+            while(overState==0){ //for blink, force LEDS to state 0
+                LATBbits.LATB9= 0;
+                LATAbits.LATA6= 0;
+                Idle();
+            }
+        }
+        if(guard== 0){ //ensure calculations and displays don't happen too often
+            do_ADC();
+            //Disp2Hex(ADCvalue);
+            uint16_t maxDuty= 309;
+            uint16_t maxADC= 1023;
+            dutyOn= ((uint32_t)maxDuty * ADCvalue)/maxADC;
+            if (dutyOn < 12){
+                dutyOn= 12;
+            }
+            dutyOff= 310- dutyOn;
+            if(PB3Mode== 1){
+                sendtoPython();
+            }
+            guard= 1;
+        }
+        if(firstTime== 1){
+            T1CONbits.TON= 1; //start timer
+            firstTime= 0;
+        }
+        while(1){
+            //where the program spends most of its time, peridic breaks-
+            //-to recalculate and set flags
+            Idle();
+            if(overState == 0){//global variable, fires every second and prompts a recalculation
+                //guard= 0;
+                break;
+            }
+            /*CONSIDER doing calculation for dutytime in ADC ISR, however
+             requirement to transmit makes a 1 second break ideal for now */
+         }
+    }
 }
 
 void ADCEnd(){

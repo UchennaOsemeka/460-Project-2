@@ -78,17 +78,19 @@ void IOinit(){ //initialize input/output
 }
 
 void IOcheck(){
- /*On return from CN and then Timer 2 Interrupts, an event flag is raised. 
+ /*Analyze what flag is set and call corresponding function, an event flag is raised. 
   * IOcheck, the next instruction after Idle() in main, is called. IOcheck uses
   * if else logic to call the appropriate action defined in timerDelay
   */
     if(programOn== 1){
+        ONMode();
+        /*
         if(LED1Mode== 1){
             ADCtoLED1(); 
         }
         else if(LED2Mode== 1){
             ADCtoLED2();
-        }
+        }*/
     }
     else if(programOn== 0){
         ADCEnd();
@@ -99,6 +101,7 @@ void IOcheck(){
 }
 
 void PB2OffBlink(){
+    //blink in this mode independent of everything else
     while(PB2OffMode== 1){
         LATBbits.LATB9^= 1;
         TMR3= 0;

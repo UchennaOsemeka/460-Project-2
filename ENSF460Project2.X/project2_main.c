@@ -108,9 +108,75 @@ int main(void) {
 // Timer 1 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void){
     //This interrupt is used for Pulse Width Modulation 
+    //
+    /*IFS0bits.T1IF = 0;
+    T1CONbits.TON= 0; //start timer */
     IFS0bits.T1IF = 0;
-    T1CONbits.TON= 0; //start timer
-}
+    /*USE OF PB2ONmode check makes sure LED isn't forced off when overstate== 0
+     in LED1Mode*/
+    if(PB2OnMode){//if we are blinking 
+        if(LED1Mode== 1 && overState== 1){
+            if(changeState==0){
+            LATBbits.LATB9= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+
+            }
+            else if(changeState== 1){
+                LATBbits.LATB9= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+        else if(LED2Mode== 1 && overState== 1){
+            if(changeState==0){
+            LATAbits.LATA6= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+            }
+            else if(changeState== 1){
+                LATAbits.LATA6= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+    }
+    else{//no blink
+        if(LED1Mode== 1){
+            if(changeState==0){
+            LATBbits.LATB9= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+
+            }
+            else if(changeState== 1){
+                LATBbits.LATB9= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+        else if(LED2Mode== 1){
+            if(changeState==0){
+                LATAbits.LATA6= 1;
+                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 1;
+            }
+            else if(changeState== 1){
+                LATAbits.LATA6= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+    }
+   }
 
 // Timer 2 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
@@ -175,7 +241,7 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
 }
 
 void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
-    //TMR3 used for force blinking every 0.5s
+    //TMR3 used for force blinking and recalc every 0.5s
     IFS0bits.T3IF = 0;
     overState ^= 1;
     T3CONbits.TON = 1;   //keep timer on
