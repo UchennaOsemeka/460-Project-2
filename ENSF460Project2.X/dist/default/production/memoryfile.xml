@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/debug/ENSF460Project2.X.debug.elf">
+  <executable name="dist/default/production/ENSF460Project2.X.production.elf">
     <memory name="data">
       <units>bytes</units>
       <length>1536</length>
-      <used>170</used>
-      <free>1366</free>
+      <used>90</used>
+      <free>1446</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>16128</length>
-      <used>14883</used>
-      <free>1245</free>
+      <used>15369</used>
+      <free>759</free>
     </memory>
   </executable>
 </project>

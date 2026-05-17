@@ -39,7 +39,7 @@ void IOinit(){ //initialize input/output
     T1CONbits.TSYNC = 0; // do not sync to external clock
     // T1CONbits.TGATE = 0;
     T1CONbits.TSIDL = 0; //operate in idle mode
-    IPC0bits.T1IP = 2; //set priority to 2.
+    IPC0bits.T1IP = 4; //set priority 
     IFS0bits.T1IF = 0; //clear interrupt flag
     IEC0bits.T1IE = 1; //enable timer interrupt
     
@@ -51,7 +51,7 @@ void IOinit(){ //initialize input/output
     TRISBbits.TRISB9 = 0;  
     LATBbits.LATB9 = 0;
     TRISAbits.TRISA6 = 0;
-    LATAbits.LATA6 = 1;
+    LATAbits.LATA6 = 0;
     
     TRISAbits.TRISA4 = 1;
     CNPU1bits.CN0PUE = 1;
@@ -78,17 +78,19 @@ void IOinit(){ //initialize input/output
 }
 
 void IOcheck(){
- /*On return from CN and then Timer 2 Interrupts, an event flag is raised. 
+ /*Analyze what flag is set and call corresponding function, an event flag is raised. 
   * IOcheck, the next instruction after Idle() in main, is called. IOcheck uses
   * if else logic to call the appropriate action defined in timerDelay
   */
     if(programOn== 1){
+        ONMode();
+        /*
         if(LED1Mode== 1){
             ADCtoLED1(); 
         }
         else if(LED2Mode== 1){
             ADCtoLED2();
-        }
+        }*/
     }
     else if(programOn== 0){
         ADCEnd();
@@ -99,6 +101,7 @@ void IOcheck(){
 }
 
 void PB2OffBlink(){
+    //blink in this mode independent of everything else
     while(PB2OffMode== 1){
         LATBbits.LATB9^= 1;
         TMR3= 0;
@@ -106,4 +109,7 @@ void PB2OffBlink(){
         T3CONbits.TON= 1; //start timer
         Idle();
     }
+    if(PB2OffMode== 0){
+            LATBbits.LATB9= 0;
+        }
 }

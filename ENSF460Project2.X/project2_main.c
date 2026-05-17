@@ -67,14 +67,19 @@ uint16_t volatile PB2OffMode= 0;
 
 
 
+
 //Status Flags
 uint16_t volatile prsLfilter= 0;  //used for filtering long vs short presses
 uint16_t volatile TMR3Flag= 0;
+uint16_t volatile changeState= 0;
+uint16_t volatile guard= 0;
 
 
 //Global Variables
 uint16_t volatile ADCvalue= 0; // 16 bit register used to hold ADC converted digital output ADC1BUF0
 uint16_t volatile overState= 0; // state of output
+uint16_t volatile dutyOn= 0;
+uint16_t volatile dutyOff= 0;
 
 /**
  * You might find it useful to add your own #defines to improve readability here
@@ -103,12 +108,75 @@ int main(void) {
 // Timer 1 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void){
     //This interrupt is used for Pulse Width Modulation 
+    //
+    /*IFS0bits.T1IF = 0;
+    T1CONbits.TON= 0; //start timer */
     IFS0bits.T1IF = 0;
-    //_LATA6 ^= 1; //change led2 state
-    T1CONbits.TON = 0;
-    //TMR1flag = 1; // global variable created by user
-    
-}
+    /*USE OF PB2ONmode check makes sure LED isn't forced off when overstate== 0
+     in LED1Mode*/
+    if(PB2OnMode){//if we are blinking 
+        if(LED1Mode== 1 && overState== 1){
+            if(changeState==0){
+            LATBbits.LATB9= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+
+            }
+            else if(changeState== 1){
+                LATBbits.LATB9= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+        else if(LED2Mode== 1 && overState== 1){
+            if(changeState==0){
+            LATAbits.LATA6= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+            }
+            else if(changeState== 1){
+                LATAbits.LATA6= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+    }
+    else{//no blink
+        if(LED1Mode== 1){
+            if(changeState==0){
+            LATBbits.LATB9= 1;
+            PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+            //T1CONbits.TON= 1; //start timer
+            changeState= 1;
+
+            }
+            else if(changeState== 1){
+                LATBbits.LATB9= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+        else if(LED2Mode== 1){
+            if(changeState==0){
+                LATAbits.LATA6= 1;
+                PR1=  dutyOn;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 1;
+            }
+            else if(changeState== 1){
+                LATAbits.LATA6= 0;
+                PR1=  dutyOff;  //on time % of 100Hz- 0.01s
+                //T1CONbits.TON= 1; //start timer
+                changeState= 0;
+            } 
+        }
+    }
+   }
 
 // Timer 2 interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
@@ -159,7 +227,7 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
     else if(programOn== 0){
         if(PORTBbits.RB7== 0){
             //on PB1 press while off turn LED1 on
-            programOn== 1;
+            programOn= 1;
             LED1Mode= 1; //on PB1 press start normal light control-LED1
         }
         else if(PORTBbits.RB4== 0){
@@ -173,11 +241,12 @@ void __attribute__((interrupt, no_auto_psv)) _T2Interrupt(void){
 }
 
 void __attribute__((interrupt, no_auto_psv)) _T3Interrupt(void){
-    //TMR3 used for force blinking every 0.5s
+    //TMR3 used for force blinking and recalc every 0.5s
     IFS0bits.T3IF = 0;
     overState ^= 1;
     T3CONbits.TON = 1;   //keep timer on
-    TMR3Flag= 1;   
+    TMR3Flag= 1;  
+    guard= 0;
 }
 
 void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
@@ -187,6 +256,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
         if (TMR3Flag== 1){
         /*If timer has finished and we are filtering, this is a long press*/
              //on PB1 long press, change LED
+            //programOn= 1;
             if(LED1Mode==1){
                 LED2Mode= 1;
                 LED1Mode= 0;
@@ -220,6 +290,7 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void){
 
 //ADC interrupt subroutine
 void __attribute__((interrupt, no_auto_psv)) _ADC1Interrupt(void){
+    ADCvalue = ADC1BUF0; // ADC output is stored in ADC1BUF0 as this point
     IFS0bits.AD1IF = 0; // Clear the ADC1 Interrupt Flag
 }
 
